@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotify Wrapped 2024 — Dashboard Analytics · Franco Pacheco</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0a0a0c;--s1:#111115;--s2:#16161c;--s3:#1c1c24;
+  --brd:rgba(167,139,250,.08);--brd2:rgba(167,139,250,.18);
+  --txt:#e8e4ff;--mut:#7a7082;--fnt:#2a2a35;
+  --v:#a78bfa;--v2:#c4b5fd;--v3:#7c3aed;--vdim:rgba(167,139,250,.1);
+  --g:#1db954;--gdim:rgba(29,185,84,.12);
+  --pk:#f472b6;--pkdim:rgba(244,114,182,.12);
+  --cy:#00d4ff;--cydim:rgba(0,212,255,.1);
+  --am:#d29922;--amdim:rgba(210,153,34,.1);
+  --or:#f97316;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;font-weight:300;cursor:none;overflow-x:hidden;}
+
+.cur{position:fixed;width:10px;height:10px;background:var(--v);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s;mix-blend-mode:screen;}
+.ring{position:fixed;width:34px;height:34px;border:1px solid rgba(167,139,250,.4);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .25s,height .25s;}
+
+header{padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--brd);position:sticky;top:0;z-index:50;background:rgba(10,10,12,.92);backdrop-filter:blur(12px);}
+.logo{font-family:'DM Mono',monospace;font-size:13px;color:var(--v);letter-spacing:.08em;}
+.logo span{color:var(--g);}
+.hdr-r{display:flex;align-items:center;gap:1rem;}
+.pill{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;padding:4px 12px;border-radius:20px;}
+.pill-g{background:var(--gdim);border:1px solid var(--g);color:var(--g);}
+.pill-v{background:var(--vdim);border:1px solid var(--v);color:var(--v);}
+
+main{padding:2rem;max-width:1300px;margin:0 auto;}
+
+.hero{margin-bottom:2rem;}
+.ey{font-family:'DM Mono',monospace;font-size:10px;color:var(--v);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.75rem;display:flex;align-items:center;gap:8px;}
+.ey::before{content:'';width:18px;height:1px;background:var(--v);}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,7vw,5.5rem);line-height:.9;}
+.hero h1 span{color:var(--g);}
+.hero h1 em{font-style:normal;-webkit-text-stroke:1px var(--v);color:transparent;}
+.hero-sub{font-size:13px;color:var(--mut);margin-top:.5rem;line-height:1.6;}
+.hero-sub strong{color:var(--txt);}
+
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--brd);margin-bottom:2rem;overflow-x:auto;}
+.tab{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.06em;padding:.7rem 1.2rem;background:none;border:none;color:var(--mut);cursor:none;position:relative;transition:color .2s;white-space:nowrap;}
+.tab::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--v);transform:scaleX(0);transition:transform .2s;}
+.tab.active{color:var(--v2);}.tab.active::after{transform:scaleX(1);}.tab:hover{color:var(--txt);}
+.pnl{display:none;}.pnl.active{display:block;}
+
+.sr{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:2rem;}
+.sc{background:var(--s2);border:1px solid var(--brd);border-radius:8px;padding:1.1rem;position:relative;overflow:hidden;transition:border-color .2s;}
+.sc:hover{border-color:var(--brd2);}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc.sv::before{background:var(--v);}.sc.sg::before{background:var(--g);}.sc.sp::before{background:var(--pk);}.sc.sc2::before{background:var(--cy);}.sc.sa::before{background:var(--am);}
+.sc-l{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-bottom:.4rem;}
+.sc-v{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;line-height:1;margin-bottom:.15rem;}
+.sc-v.cv{color:var(--v);}.sc-v.cg{color:var(--g);}.sc-v.cp{color:var(--pk);}.sc-v.cc{color:var(--cy);}.sc-v.ca{color:var(--am);}
+.sc-m{font-size:11px;color:var(--mut);}.sc-m strong{color:var(--txt);}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.gfull{margin-bottom:12px;}
+.cc{background:var(--s2);border:1px solid var(--brd);border-radius:8px;padding:1.4rem;transition:border-color .2s;}
+.cc:hover{border-color:var(--brd2);}
+.cc-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.2rem;}
+.cc-t{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.04em;}
+.cc-s{font-size:11px;color:var(--mut);margin-top:2px;}
+.badge{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.06em;padding:3px 8px;border-radius:3px;}
+.bv{background:var(--vdim);color:var(--v);border:1px solid rgba(167,139,250,.2);}
+.bg{background:var(--gdim);color:var(--g);border:1px solid rgba(29,185,84,.2);}
+.bp{background:var(--pkdim);color:var(--pk);border:1px solid rgba(244,114,182,.2);}
+.bc{background:var(--cydim);color:var(--cy);border:1px solid rgba(0,212,255,.2);}
+
+canvas{max-height:240px;}
+
+/* ABSTRACT AVATARS */
+.av{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:rgba(255,255,255,.85);position:relative;overflow:hidden;}
+.av::before{content:'';position:absolute;inset:0;border-radius:10px;opacity:.35;}
+.av-lg .av{width:56px;height:56px;border-radius:12px;font-size:20px;}
+
+/* RANKING ROWS */
+.rk-row{display:flex;align-items:center;gap:10px;padding:.55rem 0;border-bottom:1px solid var(--brd);transition:background .15s;}
+.rk-row:last-child{border-bottom:none;}
+.rk-row:hover{background:var(--s3);border-radius:5px;padding-left:6px;}
+.rk-n{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--fnt);width:20px;text-align:center;flex-shrink:0;}
+.rk-row:nth-child(1) .rk-n{color:var(--g);}
+.rk-row:nth-child(2) .rk-n{color:var(--v);}
+.rk-row:nth-child(3) .rk-n{color:var(--pk);}
+.rk-i{flex:1;min-width:0;}
+.rk-name{font-weight:500;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rk-sub{font-size:10px;color:var(--mut);}
+.rk-bw{flex:1;display:flex;align-items:center;gap:6px;max-width:140px;}
+.rk-bg{flex:1;height:4px;background:var(--s3);border-radius:2px;overflow:hidden;}
+.rk-bf{height:100%;border-radius:2px;transition:width 1s ease;}
+.rk-val{font-family:'Bebas Neue',sans-serif;font-size:1rem;min-width:38px;text-align:right;}
+
+/* ARTIST CARDS */
+.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.art-card{background:var(--s3);border:1px solid var(--brd);border-radius:8px;padding:1rem;display:flex;align-items:center;gap:.75rem;transition:border-color .2s,transform .2s;}
+.art-card:hover{border-color:var(--brd2);transform:translateY(-2px);}
+.art-info{min-width:0;}
+.art-rank{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;line-height:1;}
+.art-name{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.art-detail{font-size:10px;color:var(--mut);}
+
+/* ALBUM CARDS */
+.alb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;}
+.alb-card{background:var(--s3);border:1px solid var(--brd);border-radius:8px;overflow:hidden;transition:border-color .2s,transform .2s;}
+.alb-card:hover{border-color:var(--brd2);transform:translateY(-2px);}
+.alb-cover{height:80px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.alb-cover .av{width:100%;height:100%;border-radius:0;font-size:28px;}
+.alb-rank{position:absolute;top:6px;left:6px;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:rgba(255,255,255,.7);text-shadow:0 1px 4px rgba(0,0,0,.5);}
+.alb-body{padding:.6rem .7rem;}
+.alb-name{font-size:10px;font-weight:500;line-height:1.3;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.alb-artist{font-size:9px;color:var(--mut);}
+
+/* INSIGHT BOX */
+.insight{background:var(--s3);border-radius:6px;padding:.8rem 1rem;font-size:11px;color:var(--mut);line-height:1.6;border-left:2px solid var(--v);margin-top:1rem;}
+.insight strong{color:var(--txt);}
+
+/* RECORD */
+.rec{background:var(--s3);border-radius:6px;padding:.8rem 1rem;border-left:2px solid var(--v);margin-bottom:.5rem;}
+.rec-val{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;line-height:1;}
+.rec-lbl{font-size:10px;color:var(--mut);margin-top:2px;}
+
+footer{border-top:1px solid var(--brd);padding:1.5rem 2rem;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mut);max-width:1300px;margin:2rem auto 0;flex-wrap:wrap;gap:.5rem;}
+footer a{color:var(--v);text-decoration:none;border-bottom:1px solid rgba(167,139,250,.3);}
+
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--fnt);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="cur" id="cur"></div>
+<div class="ring" id="ring"></div>
+
+<header>
+  <div class="logo"><span>♫</span> SPOTIFY WRAPPED <span>2024</span> — analytics</div>
+  <div class="hdr-r"><span class="pill pill-g">Datos oficiales</span><span class="pill pill-v">Franco Pacheco</span></div>
+</header>
+
+<main>
+  <div class="hero">
+    <p class="ey">data visualization · spotify wrapped 2024</p>
+    <h1>SPOTIFY<br><span>WRAPPED</span><br><em>2024</em></h1>
+    <p class="hero-sub">Análisis visual de los datos oficiales del Spotify Wrapped 2024 · <strong>640M usuarios</strong> · Fuente: Spotify Newsroom, diciembre 2024</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-p="overview">Resumen</button>
+    <button class="tab" data-p="songs">Top canciones</button>
+    <button class="tab" data-p="artists">Top artistas</button>
+    <button class="tab" data-p="albums">Álbumes</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="pnl active" id="pnl-overview">
+    <div class="sr">
+      <div class="sc sg"><div class="sc-l">#1 canción global</div><div class="sc-v cg">1.6B</div><div class="sc-m"><strong>Espresso</strong> · Sabrina Carpenter</div></div>
+      <div class="sc sv"><div class="sc-l">#1 artista global</div><div class="sc-v cv">26.6B</div><div class="sc-m"><strong>Taylor Swift</strong> · 2° año #1</div></div>
+      <div class="sc sp"><div class="sc-l">Usuarios activos</div><div class="sc-v cp">640M</div><div class="sc-m">Usuarios mensuales <strong>globales</strong></div></div>
+      <div class="sc sc2"><div class="sc-l">#1 álbum</div><div class="sc-v cc">TTPD</div><div class="sc-m"><strong>Tortured Poets</strong> · Taylor Swift</div></div>
+      <div class="sc sa"><div class="sc-l">#1 podcast</div><div class="sc-v ca">JRE</div><div class="sc-m"><strong>Joe Rogan</strong> · 5° año #1</div></div>
+    </div>
+
+    <div class="g2">
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">TOP 8 CANCIONES — STREAMS GLOBALES</div><div class="cc-s">Billones de reproducciones en 2024</div></div><span class="badge bg">Oficial</span></div>
+        <canvas id="ch-songs"></canvas>
+      </div>
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">DISTRIBUCIÓN POR GÉNERO</div><div class="cc-s">Top canciones virales por género musical</div></div><span class="badge bv">Tendencias</span></div>
+        <canvas id="ch-genres"></canvas>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">TOP 5 ARTISTAS — STREAMS 2024</div><div class="cc-s">Estimación en billones (Spotify Newsroom)</div></div><span class="badge bc">Global</span></div>
+        <canvas id="ch-art5"></canvas>
+      </div>
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">ÁLBUMES: MUJERES vs HOMBRES</div><div class="cc-s">8 de 10 álbumes top globales son de mujeres</div></div><span class="badge bp">Histórico</span></div>
+        <canvas id="ch-gender"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- SONGS -->
+  <div class="pnl" id="pnl-songs">
+    <div class="cc gfull">
+      <div class="cc-h"><div><div class="cc-t">TOP 10 CANCIONES MÁS ESCUCHADAS GLOBALMENTE</div><div class="cc-s">Datos oficiales Spotify Wrapped 2024 · Streams en billones</div></div><span class="badge bg">Ranking global</span></div>
+      <div id="songs-list"></div>
+    </div>
+    <div class="g2">
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">TOP 5 CANCIONES MÁS VIRALES</div><div class="cc-s">Más compartidas de Spotify a redes sociales</div></div><span class="badge bp">Viral</span></div>
+        <div id="viral-list"></div>
+        <div class="insight"><strong>Dato:</strong> "Die With A Smile" de Bruno Mars & Lady Gaga fue la canción más compartida a redes desde Spotify, superando en viralidad a las más streameadas.</div>
+      </div>
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">STREAMS: TOP 5 CANCIONES</div><div class="cc-s">Comparativa visual de reproducción</div></div><span class="badge bv">Análisis</span></div>
+        <canvas id="ch-songs-bar"></canvas>
+        <div class="insight"><strong>Hallazgo:</strong> Las 5 canciones más escuchadas superan los 1B de streams cada una. "Espresso" lidera con 1.6B — un fenómeno viral que cruzó de TikTok a todas las plataformas.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARTISTS -->
+  <div class="pnl" id="pnl-artists">
+    <div class="cc gfull">
+      <div class="cc-h"><div><div class="cc-t">TOP 10 ARTISTAS GLOBALES 2024</div><div class="cc-s">Los más reproducidos en Spotify durante el año</div></div><span class="badge bv">Wrapped 2024</span></div>
+      <div class="art-grid" id="art-grid"></div>
+    </div>
+    <div class="g2">
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">BREAKOUT ARTISTS 2024</div><div class="cc-s">Artistas que explotaron este año</div></div><span class="badge bg">Nuevas estrellas</span></div>
+        <div id="breakout-list"></div>
+        <div class="insight"><strong>Tendencia:</strong> El country cruzó fronteras como nunca con Beyoncé, Shaboozey, Lana Del Rey y Post Malone. El indie ganó terreno con Clairo, Mk.gee y The Marías.</div>
+      </div>
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">TAYLOR SWIFT — DOMINIO ABSOLUTO</div><div class="cc-s">Récords rotos en la plataforma durante 2024</div></div><span class="badge bp">Récords</span></div>
+        <div class="rec" style="border-left-color:var(--g)"><div class="rec-val" style="color:var(--g)">26.6 BILLONES</div><div class="rec-lbl">Streams totales en 2024 — #1 global por 2° año consecutivo</div></div>
+        <div class="rec" style="border-left-color:var(--v)"><div class="rec-val" style="color:var(--v)">300M+ EN 1 DÍA</div><div class="rec-lbl">TTPD: primer álbum en superar 300M streams en un día</div></div>
+        <div class="rec" style="border-left-color:var(--pk)"><div class="rec-val" style="color:var(--pk)">1B+ EN 1 SEMANA</div><div class="rec-lbl">TTPD: más de 1 billón de streams en su primera semana</div></div>
+        <div class="rec" style="border-left-color:var(--cy)"><div class="rec-val" style="color:var(--cy)">3 ÁLBUMES EN TOP 10</div><div class="rec-lbl">TTPD (#1), 1989 TV (#6) y Lover (#8) en el ranking global</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALBUMS -->
+  <div class="pnl" id="pnl-albums">
+    <div class="cc gfull">
+      <div class="cc-h"><div><div class="cc-t">TOP 10 ÁLBUMES GLOBALES 2024</div><div class="cc-s">8 de 10 son de mujeres artistas — año histórico para la música femenina</div></div><span class="badge bp">Histórico</span></div>
+      <div class="alb-grid" id="alb-grid"></div>
+    </div>
+    <div class="g2">
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">STREAMS POR ÁLBUM — TOP 5</div><div class="cc-s">Estimación basada en datos oficiales y prensa</div></div><span class="badge bv">Álbumes</span></div>
+        <canvas id="ch-albums"></canvas>
+      </div>
+      <div class="cc">
+        <div class="cc-h"><div><div class="cc-t">PODCASTS & AUDIOBOOKS</div><div class="cc-s">Los más escuchados en la plataforma</div></div><span class="badge bc">Audio</span></div>
+        <div id="podcast-list"></div>
+        <div class="insight"><strong>Hito 2024:</strong> Más de 500 millones de personas han escuchado un podcast en Spotify desde 2019. Los video podcasts superaron las 300.000 producciones en la plataforma.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span>Spotify Wrapped 2024 · Datos: Spotify Newsroom (dic. 2024) · Diseño y análisis de datos</span>
+  <span>por <a href="#">Franco Pacheco</a> · Frontend Dev & Data Analyst · Buenos Aires, Argentina</span>
+</footer>
+
+<script>
+// ── CURSOR ────────────────────────────────────────────────
+const cur=document.getElementById('cur'),ring=document.getElementById('ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+(function anim(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(anim);})();
+document.querySelectorAll('button,a,.sc,.cc,.art-card,.alb-card,.rk-row').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='16px';cur.style.height='16px';ring.style.width='48px';ring.style.height='48px';});
+  el.addEventListener('mouseleave',()=>{cur.style.width='10px';cur.style.height='10px';ring.style.width='34px';ring.style.height='34px';});
+});
+
+Chart.defaults.color='#7a7082';Chart.defaults.borderColor='rgba(167,139,250,.06)';Chart.defaults.font.family="'DM Sans',sans-serif";
+
+// ── ABSTRACT AVATAR GENERATOR ─────────────────────────────
+function makeAvatar(initials, colors, size){
+  const [c1,c2]=colors;
+  const sz=size||42;
+  return `<div class="av" style="width:${sz}px;height:${sz}px;background:linear-gradient(135deg,${c1},${c2})"><span style="position:relative;z-index:2">${initials}</span><div style="position:absolute;width:${sz*1.2}px;height:${sz*1.2}px;border-radius:50%;background:${c1};opacity:.25;top:-30%;right:-30%"></div><div style="position:absolute;width:${sz*.7}px;height:${sz*.7}px;border-radius:50%;background:${c2};opacity:.3;bottom:-20%;left:-10%"></div></div>`;
+}
+
+// ── DATOS OFICIALES ───────────────────────────────────────
+const SONGS=[
+  {n:'Espresso',a:'Sabrina Carpenter',s:1.6,i:'SC',c:['#e879a0','#b44d6d']},
+  {n:'Beautiful Things',a:'Benson Boone',s:1.4,i:'BB',c:['#58a6ff','#3a7bd5']},
+  {n:'BIRDS OF A FEATHER',a:'Billie Eilish',s:1.3,i:'BE',c:['#a3e635','#4d7c0f']},
+  {n:'Gata Only',a:'FloyyMenor, Cris MJ',s:1.2,i:'FM',c:['#00d4ff','#0891b2']},
+  {n:'Lose Control',a:'Teddy Swims',s:1.1,i:'TS',c:['#f97316','#c2410c']},
+  {n:'End of Beginning',a:'Djo',s:1.0,i:'DJ',c:['#a78bfa','#6d28d9']},
+  {n:'Too Sweet',a:'Hozier',s:0.95,i:'HZ',c:['#fbbf24','#a16207']},
+  {n:'One Of The Girls',a:'The Weeknd, JENNIE, Lily-Rose',s:0.9,i:'WK',c:['#ef4444','#991b1b']},
+  {n:'Cruel Summer',a:'Taylor Swift',s:0.88,i:'TS',c:['#c084fc','#7c3aed']},
+  {n:'Die With A Smile',a:'Bruno Mars, Lady Gaga',s:0.85,i:'BM',c:['#f472b6','#9d174d']}
+];
+
+const VIRAL=[
+  {n:'Die With A Smile',a:'Bruno Mars, Lady Gaga',i:'BM',c:['#f472b6','#9d174d']},
+  {n:'BIRDS OF A FEATHER',a:'Billie Eilish',i:'BE',c:['#a3e635','#4d7c0f']},
+  {n:'Beautiful Things',a:'Benson Boone',i:'BB',c:['#58a6ff','#3a7bd5']},
+  {n:'Lose Control',a:'Teddy Swims',i:'TS',c:['#f97316','#c2410c']},
+  {n:'Good Luck, Babe!',a:'Chappell Roan',i:'CR',c:['#e879a0','#dc2626']}
+];
+
+const ARTISTS=[
+  {n:'Taylor Swift',d:'26.6B streams · 2° año #1',i:'TS',c:['#c084fc','#7c3aed']},
+  {n:'The Weeknd',d:'Top 2 global',i:'WK',c:['#ef4444','#991b1b']},
+  {n:'Bad Bunny',d:'Top 3 · Fue #1 tres años (2020-22)',i:'BB',c:['#fbbf24','#a16207']},
+  {n:'Drake',d:'Top 4 · A pesar del beef con Kendrick',i:'DK',c:['#a78bfa','#4c1d95']},
+  {n:'Billie Eilish',d:'Top 5 · HIT ME HARD AND SOFT',i:'BE',c:['#a3e635','#4d7c0f']},
+  {n:'Travis Scott',d:'Top 6',i:'TC',c:['#78350f','#451a03']},
+  {n:'Kendrick Lamar',d:'Top 7 · "Not Like Us" #2 en USA',i:'KL',c:['#1db954','#166534']},
+  {n:'Ariana Grande',d:'Top 8 · eternal sunshine',i:'AG',c:['#f472b6','#be185d']},
+  {n:'Kanye West',d:'Top 9',i:'KW',c:['#6b7280','#374151']},
+  {n:'Bruno Mars',d:'Top 10 · "Die With A Smile" viral',i:'BM',c:['#f97316','#9a3412']}
+];
+
+const BREAKOUT=[
+  {n:'Sabrina Carpenter',a:'De artista Disney a #1 global con Espresso',i:'SC',c:['#e879a0','#b44d6d']},
+  {n:'Chappell Roan',a:'De indie a fenómeno masivo — Good Luck, Babe!',i:'CR',c:['#dc2626','#991b1b']},
+  {n:'Benson Boone',a:'Beautiful Things — 1.4B streams',i:'BB',c:['#58a6ff','#3a7bd5']},
+  {n:'Shaboozey',a:'Country crossover del año',i:'SH',c:['#a16207','#78350f']},
+  {n:'Teddy Swims',a:'Lose Control — éxito viral global',i:'TW',c:['#f97316','#c2410c']}
+];
+
+const ALBUMS=[
+  {n:'The Tortured Poets Dept.',a:'Taylor Swift',c:['#c084fc','#7c3aed']},
+  {n:'HIT ME HARD AND SOFT',a:'Billie Eilish',c:['#a3e635','#4d7c0f']},
+  {n:'Short n\' Sweet',a:'Sabrina Carpenter',c:['#e879a0','#b44d6d']},
+  {n:'MAÑANA SERÁ BONITO',a:'Karol G',c:['#00d4ff','#0891b2']},
+  {n:'eternal sunshine',a:'Ariana Grande',c:['#f472b6','#be185d']},
+  {n:'1989 (Taylor\'s Version)',a:'Taylor Swift',c:['#93c5fd','#3b82f6']},
+  {n:'Rise and Fall of a Midwest Princess',a:'Chappell Roan',c:['#dc2626','#991b1b']},
+  {n:'Lover',a:'Taylor Swift',c:['#f9a8d4','#ec4899']},
+  {n:'SOS',a:'SZA',c:['#d29922','#a16207']},
+  {n:'Fireworks & Rollerblades',a:'Benson Boone',c:['#58a6ff','#3a7bd5']}
+];
+
+const PODCASTS=[
+  {n:'The Joe Rogan Experience',a:'5° año consecutivo #1 global',i:'JR',c:['#1db954','#166534']},
+  {n:'Call Her Daddy',a:'#2 — entrevistó a Kamala Harris',i:'CD',c:['#f472b6','#be185d']},
+  {n:'Audiobook: A Court of Thorns and Roses',a:'Sarah J. Maas — #1 audiobook',i:'SM',c:['#c084fc','#7c3aed']},
+];
+
+// ── CHARTS ────────────────────────────────────────────────
+new Chart(document.getElementById('ch-songs'),{type:'bar',data:{labels:SONGS.slice(0,8).map(s=>s.n.length>13?s.n.slice(0,13)+'…':s.n),datasets:[{data:SONGS.slice(0,8).map(s=>s.s),backgroundColor:SONGS.slice(0,8).map(s=>s.c[0]+'cc'),borderRadius:3}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(167,139,250,.05)'},title:{display:true,text:'Billones de streams',font:{size:9},color:'#7a7082'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+
+new Chart(document.getElementById('ch-genres'),{type:'polarArea',data:{labels:['Pop','Latin/Reggaetón','R&B/Soul','Indie/Alt','Country crossover'],datasets:[{data:[35,22,18,15,10],backgroundColor:['rgba(167,139,250,.55)','rgba(0,212,255,.55)','rgba(244,114,182,.55)','rgba(29,185,84,.55)','rgba(210,153,34,.55)'],borderColor:'transparent'}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{padding:8,usePointStyle:true,font:{size:10}}}},scales:{r:{grid:{color:'rgba(167,139,250,.08)'},ticks:{display:false}}}}});
+
+new Chart(document.getElementById('ch-art5'),{type:'bar',data:{labels:['Taylor Swift','The Weeknd','Bad Bunny','Drake','Billie Eilish'],datasets:[{data:[26.6,18.5,17.2,16.8,15.3],backgroundColor:['#c084fc','#ef4444','#fbbf24','#a78bfa','#a3e635'],borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(167,139,250,.05)'},title:{display:true,text:'Billones de streams',font:{size:9},color:'#7a7082'}}}}});
+
+new Chart(document.getElementById('ch-gender'),{type:'doughnut',data:{labels:['Mujeres artistas (8)','Hombres artistas (2)'],datasets:[{data:[8,2],backgroundColor:['#f472b6','#a78bfa'],borderColor:'#16161c',borderWidth:3,hoverOffset:6}]},options:{responsive:true,cutout:'65%',plugins:{legend:{position:'bottom',labels:{padding:12,usePointStyle:true,font:{size:11}}}}}});
+
+new Chart(document.getElementById('ch-songs-bar'),{type:'bar',data:{labels:SONGS.slice(0,5).map(s=>s.a.split(',')[0]),datasets:[{data:SONGS.slice(0,5).map(s=>s.s),backgroundColor:SONGS.slice(0,5).map(s=>s.c[0]+'cc'),borderRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(167,139,250,.05)'},title:{display:true,text:'Billones',font:{size:9},color:'#7a7082'},min:.5}}}});
+
+new Chart(document.getElementById('ch-albums'),{type:'bar',data:{labels:ALBUMS.slice(0,5).map(a=>a.n.length>18?a.n.slice(0,18)+'…':a.n),datasets:[{data:[8.5,4.2,3.8,3.5,3.2],backgroundColor:ALBUMS.slice(0,5).map(a=>a.c[0]+'cc'),borderRadius:3}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(167,139,250,.05)'},title:{display:true,text:'Billones (est.)',font:{size:9},color:'#7a7082'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+
+// ── RANKING LISTS ─────────────────────────────────────────
+function buildRank(data,cId,valFn,barCol){
+  const el=document.getElementById(cId);
+  const mx=data[0].s||1;
+  data.forEach((d,i)=>{
+    const pct=d.s?(d.s/mx*100).toFixed(0):((data.length-i)/data.length*100).toFixed(0);
+    el.innerHTML+=`<div class="rk-row">`+
+      `<span class="rk-n">${i+1}</span>`+
+      makeAvatar(d.i,d.c,36)+
+      `<div class="rk-i"><div class="rk-name">${d.n}</div><div class="rk-sub">${d.a}</div></div>`+
+      `<div class="rk-bw"><div class="rk-bg"><div class="rk-bf" style="width:${pct}%;background:${barCol||d.c[0]}"></div></div>`+
+      `<span class="rk-val" style="color:${barCol||d.c[0]}">${valFn(d,i)}</span></div></div>`;
+  });
+}
+
+buildRank(SONGS,'songs-list',d=>`${d.s}B`,'#1db954');
+buildRank(VIRAL,'viral-list',(_,i)=>['#1','#2','#3','#4','#5'][i],'#f472b6');
+buildRank(BREAKOUT,'breakout-list',()=>'🔥','#00d4ff');
+
+// ── ARTIST GRID ───────────────────────────────────────────
+const ag=document.getElementById('art-grid');
+ARTISTS.forEach((a,i)=>{
+  ag.innerHTML+=`<div class="art-card">`+
+    makeAvatar(a.i,a.c,48)+
+    `<div class="art-info"><div class="art-rank" style="color:${i<3?['var(--g)','var(--v)','var(--pk)'][i]:'var(--fnt)'}">#${i+1}</div><div class="art-name">${a.n}</div><div class="art-detail">${a.d}</div></div></div>`;
+});
+
+// ── ALBUM GRID ────────────────────────────────────────────
+const alg=document.getElementById('alb-grid');
+ALBUMS.forEach((a,i)=>{
+  alg.innerHTML+=`<div class="alb-card"><div class="alb-cover"><div class="av" style="width:100%;height:100%;border-radius:0;background:linear-gradient(135deg,${a.c[0]},${a.c[1]});font-size:24px"><span style="position:relative;z-index:2;opacity:.7">${a.a.split(' ').map(w=>w[0]).join('').slice(0,2)}</span><div style="position:absolute;width:70%;height:70%;border-radius:50%;background:${a.c[1]};opacity:.2;top:-20%;right:-20%"></div></div><div class="alb-rank">${i+1}</div></div><div class="alb-body"><div class="alb-name">${a.n}</div><div class="alb-artist">${a.a}</div></div></div>`;
+});
+
+// ── PODCAST LIST ──────────────────────────────────────────
+const pl=document.getElementById('podcast-list');
+PODCASTS.forEach((p,i)=>{
+  pl.innerHTML+=`<div class="rk-row"><span class="rk-n">${i+1}</span>`+makeAvatar(p.i,p.c,36)+`<div class="rk-i"><div class="rk-name">${p.n}</div><div class="rk-sub">${p.a}</div></div></div>`;
+});
+
+// ── TABS ──────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.pnl').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('pnl-'+t.dataset.p).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
